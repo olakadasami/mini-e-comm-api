@@ -56,22 +56,34 @@ router
         /**
          * Users Routes
          */
-        router.resource('users', UsersController).apiOnly().as('users')
+        router.resource('users', UsersController).apiOnly().as('users').use('*', middleware.auth())
 
         /**
          * Products Routes
          */
-        router.resource('products', ProductController).apiOnly().as('products')
+        router
+          .resource('products', ProductController)
+          .apiOnly()
+          .as('products')
+          .use(['destroy', 'store', 'update'], middleware.auth())
 
         /**
          * Orders Routes
          */
-        router.resource('orders', OrdersController).apiOnly().as('orders')
+        router
+          .resource('orders', OrdersController)
+          .apiOnly()
+          .as('orders')
+          .use('*', middleware.auth())
 
         /**
          * Category Routes
          */
-        router.resource('categories', CategoryController).apiOnly().as('categories')
+        router
+          .resource('categories', CategoryController)
+          .apiOnly()
+          .as('categories')
+          .use(['destroy', 'store', 'update'], middleware.auth())
 
         /**
          * Cart Routes
@@ -86,6 +98,7 @@ router
           })
           .as('carts')
           .prefix('carts')
+          .use(middleware.auth())
       })
       .prefix('v1')
   })
