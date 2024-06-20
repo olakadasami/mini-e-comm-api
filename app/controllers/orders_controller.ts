@@ -1,4 +1,5 @@
 import Order from '#models/order'
+import OrderPolicy from '#policies/order_policy'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class OrdersController {
@@ -27,21 +28,24 @@ export default class OrdersController {
   /**
    * Show individual record
    */
-  async show({ params, response }: HttpContext) {
+  async show({ params, response, bouncer }: HttpContext) {
     const order = await Order.query().where('order_id', params.id).preload('items').first()
     if (!order) {
       return response.status(404).json({ message: 'Order not found' })
     }
+    await bouncer.with(OrderPolicy).authorize('view', order)
+
     return response.json(order)
   }
 
   /**
    * Handle form submission for the edit action
    */
-  async update({ params, request }: HttpContext) {
+  async update({ params, request, bouncer }: HttpContext) {
     const order = await Order.findOrFail(params.id)
-
     const data = request.only(['status', 'totalAmount'])
+
+    await bouncer.with(OrderPolicy).authorize('update', order)
 
     await order.merge(data).save()
     return order
@@ -50,8 +54,10 @@ export default class OrdersController {
   /**
    * Delete record
    */
-  async destroy({ params, response }: HttpContext) {
+  async destroy({ params, response, bouncer }: HttpContext) {
     const order = await Order.findOrFail(params.id)
+
+    await bouncer.with(OrderPolicy).authorize('destroy', order)
 
     await order.delete()
     return response.status(204).json(null)
