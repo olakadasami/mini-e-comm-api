@@ -28,8 +28,8 @@ router.get('/', async () => {
 /**
  * OAuth Routes
  */
-router.get(':provider/redirect', [SocialsController, 'redirect'])
-router.get(':provider/callback', [SocialsController, 'callback'])
+router.get(':provider/callback', [SocialsController, 'redirect'])
+router.get(':provider/redirect', [SocialsController, 'callback'])
 
 /**
  * API routes

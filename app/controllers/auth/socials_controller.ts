@@ -35,6 +35,7 @@ export default class SocialsController {
      * Access user info
      */
     const user = await driverInstance.user()
+    console.log({ user })
     return user
   }
 }
