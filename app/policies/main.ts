@@ -12,4 +12,6 @@
 |
 */
 
-export const policies = {}
+export const policies = {
+  CartPolicy: () => import('#policies/cart_policy')
+}
