@@ -12,7 +12,7 @@ export default class Order extends BaseModel {
   declare userId: number
 
   @column()
-  declare status: string
+  declare status: number
 
   @column()
   declare totalAmount: number
