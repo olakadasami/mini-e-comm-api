@@ -50,8 +50,10 @@ export default class ProductController {
   /**
    * Delete record
    */
-  async destroy({ params, response }: HttpContext) {
+  async destroy({ params, response, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.id)
+
+    await bouncer.with(ProductPolicy).authorize('destroy')
 
     await product.delete()
     return response.status(204).json(null)
