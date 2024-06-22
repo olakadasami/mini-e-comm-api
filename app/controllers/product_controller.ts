@@ -1,4 +1,5 @@
 import Product from '#models/product'
+import ProductPolicy from '#policies/product_policy'
 import { createProductValidator } from '#validators/product'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -14,8 +15,11 @@ export default class ProductController {
   /**
    * Handle form submission for the create action
    */
-  async store({ request, response }: HttpContext) {
+  async store({ request, response, bouncer }: HttpContext) {
     const data = await request.validateUsing(createProductValidator)
+
+    await bouncer.with(ProductPolicy).authorize('store')
+
     const product = await Product.create(data)
 
     return response.status(201).json(product)
@@ -33,9 +37,11 @@ export default class ProductController {
   /**
    * Handle form submission for the edit action
    */
-  async update({ params, request }: HttpContext) {
+  async update({ params, request, bouncer }: HttpContext) {
     const product = await Product.findOrFail(params.id)
     const data = request.only(['name', 'description', 'price', 'categoryId', 'stockQuantity'])
+
+    await bouncer.with(ProductPolicy).authorize('update')
 
     await product.merge(data).save()
     return product
