@@ -13,6 +13,7 @@
 */
 
 export const policies = {
+  UserPolicy: () => import('#policies/user_policy'),
   OrderPolicy: () => import('#policies/order_policy'),
   CartPolicy: () => import('#policies/cart_policy')
 }

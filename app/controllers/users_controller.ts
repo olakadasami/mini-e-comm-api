@@ -1,4 +1,5 @@
 import User from '#models/user'
+import UserPolicy from '#policies/user_policy'
 import { registerValidator } from '#validators/auth'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -8,8 +9,10 @@ export default class UsersController {
    *
    * GET ''
    */
-  async index({}: HttpContext) {
+  async index({ bouncer }: HttpContext) {
     const users = await User.all()
+
+    await bouncer.with(UserPolicy).authorize('viewAll')
 
     return users
   }
@@ -19,8 +22,10 @@ export default class UsersController {
    *
    * POST ''
    */
-  async store({ request }: HttpContext) {
+  async store({ request, bouncer }: HttpContext) {
     const userData = await request.validateUsing(registerValidator)
+
+    await bouncer.with(UserPolicy).authorize('store')
 
     const user = await User.create(userData)
 
@@ -32,8 +37,10 @@ export default class UsersController {
    *
    * GET ':id'
    */
-  async show({ params }: HttpContext) {
+  async show({ params, bouncer }: HttpContext) {
     const user = await User.findOrFail(params.id)
+
+    await bouncer.with(UserPolicy).authorize('view')
 
     return user
   }
@@ -43,9 +50,11 @@ export default class UsersController {
    *
    * PATCH ':id'
    */
-  async update({ params, request }: HttpContext) {
+  async update({ params, request, bouncer }: HttpContext) {
     const data = request.only(['firstName', 'lastName'])
     const user = await User.findOrFail(params.id)
+
+    await bouncer.with(UserPolicy).authorize('update', user)
 
     const updatedUser = await user.merge(data).save()
     return updatedUser
@@ -56,8 +65,11 @@ export default class UsersController {
    *
    * DELETE ':id'
    */
-  async destroy({ params, response }: HttpContext) {
+  async destroy({ params, response, bouncer }: HttpContext) {
     const user = await User.findOrFail(params.id)
+
+    await bouncer.with(UserPolicy).authorize('destroy', user)
+
     await user.delete()
 
     return response.status(204).json(null)
