@@ -6,14 +6,14 @@ import Roles from '../enums/roles.js'
 
 export default class ProductPolicy extends BasePolicy {
   store(user: User): AuthorizerResponse {
-    return user.id === Roles.MODERATOR
+    return user.roleId === Roles.MODERATOR
   }
 
   update(user: User): AuthorizerResponse {
-    return user.id === Roles.MODERATOR
+    return user.roleId === Roles.MODERATOR
   }
 
   destroy(user: User): AuthorizerResponse {
-    return user.id === Roles.MODERATOR
+    return user.roleId === Roles.MODERATOR
   }
 }
