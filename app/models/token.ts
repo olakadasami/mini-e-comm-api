@@ -4,6 +4,7 @@ import User from './user.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import stringHelpers from '@adonisjs/core/helpers/string'
 
+type TokenType = 'PASSWORD_RESET' | 'VERIFY_EMAIL'
 export default class Token extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
@@ -29,6 +30,22 @@ export default class Token extends BaseModel {
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
 
+  static async generateVerifyEmailToken(user: User) {
+    const token = stringHelpers.generateRandom(64)
+
+    // Expire/Delete old tokens
+    await Token.expireTokens(user, 'verifyEmailTokens')
+
+    // Create token record
+    const record = await user.related('verifyEmailTokens').create({
+      type: 'VERIFY_EMAIL',
+      expiresAt: DateTime.now().plus({ hours: 24 }),
+      token,
+    })
+
+    return record.token
+  }
+
   static async generatePasswordResetToken(user: User | null) {
     const token = stringHelpers.generateRandom(64)
 
@@ -37,7 +54,7 @@ export default class Token extends BaseModel {
     }
 
     // Expire/Delete old tokens
-    await Token.expirePasswordResetTokens(user)
+    await Token.expireTokens(user, 'passwordResetTokens')
 
     const record = await user.related('tokens').create({
       type: 'PASSWORD_RESET',
@@ -48,16 +65,17 @@ export default class Token extends BaseModel {
     return record.token
   }
 
-  static async expirePasswordResetTokens(user: User) {
-    await user.related('passwordResetTokens').query().update({
+  static async expireTokens(user: User, relationName: 'passwordResetTokens' | 'verifyEmailTokens') {
+    await user.related(relationName).query().update({
       expiresAt: DateTime.now(),
     })
   }
 
-  static async getPasswordResetUser(token: string) {
+  static async getTokenUser(token: string, type: TokenType) {
     const record = await Token.query()
       .preload('user')
       .where('token', token)
+      .where('type', type)
       .where('expiresAt', '>', DateTime.now().toSQL())
       .orderBy('createdAt', 'desc')
       .first()
@@ -65,10 +83,11 @@ export default class Token extends BaseModel {
     return record?.user
   }
 
-  static async verify(token: string) {
+  static async verify(token: string, type: TokenType) {
     const record = await Token.query()
       .where('expiresAt', '>', DateTime.now().toSQL())
       .where('token', token)
+      .where('type', type)
       .first()
 
     return !!record

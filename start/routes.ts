@@ -9,7 +9,7 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
-const EmailController = () => import('#controllers/auth/email_controller')
+const VerifyEmailController = () => import('#controllers/auth/verify_email_controller')
 const PasswordResetController = () => import('#controllers/auth/password_reset_controller')
 const LoginController = () => import('#controllers/auth/login_controller')
 const LogoutController = () => import('#controllers/auth/logout_controller')
@@ -34,12 +34,16 @@ router.get(':provider/callback', [SocialsController, 'redirect'])
 router.get(':provider/redirect', [SocialsController, 'callback'])
 
 /**
- * Email VErification Routes
+ * Password reset Routes
  */
 router.post('forgot-password', [PasswordResetController, 'forgot'])
 router.get('reset-password/:token', [PasswordResetController, 'show']).as('password.reset.show')
 router.post('reset-password/:token', [PasswordResetController, 'reset']).as('password.reset.store')
-router.get('verify-email/:token', [EmailController, 'confirm'])
+
+/**
+ * Email VErification Routes
+ */
+router.get('verify/email/:token', [VerifyEmailController, 'verify']).as('verify.email')
 
 /**
  * API routes

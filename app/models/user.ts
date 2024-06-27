@@ -9,6 +9,7 @@ import type { HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 import Order from './order.js'
 import mail from '@adonisjs/mail/services/main'
 import Token from './token.js'
+import VerifyEmail from '#mails/verify_email'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -17,11 +18,6 @@ const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
 
 export default class User extends compose(BaseModel, AuthFinder) {
   static accessTokens = DbAccessTokensProvider.forModel(User)
-  static emailVerificationTokens = DbAccessTokensProvider.forModel(User, {
-    expiresIn: '10 min',
-    prefix: 'oat_',
-    type: 'email_verification_token',
-  })
 
   @column({ isPrimary: true })
   declare id: number
@@ -64,13 +60,14 @@ export default class User extends compose(BaseModel, AuthFinder) {
   })
   declare passwordResetTokens: HasMany<typeof Token>
 
-  async sendEmailVerification() {
-    const verificationToken = await User.emailVerificationTokens.create(this)
-    await mail.send((message) => {
-      message
-        .to(this.email)
-        .subject('Verify your email address')
-        .htmlView('emails/verify', { user: this, token: verificationToken.value })
-    })
+  @hasMany(() => Token, {
+    onQuery: (query) => query.where('type', 'VERIFY_EMAIL'),
+  })
+  declare verifyEmailTokens: HasMany<typeof Token>
+
+  async sendVerifyEmail() {
+    const token = await Token.generateVerifyEmailToken(this)
+
+    await mail.sendLater(new VerifyEmail(this, token))
   }
 }

@@ -36,7 +36,7 @@ export default class PasswordResetController {
 
   async reset({ request }: HttpContext) {
     const { password, token } = await request.validateUsing(resetPasswordValidator)
-    const user = await Token.getPasswordResetUser(token)
+    const user = await Token.getTokenUser(token, 'PASSWORD_RESET')
 
     if (!user) {
       throw new Exception('Invalid Token, No user found', { status: 401 })
