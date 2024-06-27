@@ -4,6 +4,16 @@ import { defineConfig, transports } from '@adonisjs/mail'
 const mailConfig = defineConfig({
   default: 'smtp',
 
+  from: {
+    address: 'mail@adonis',
+    name: 'olakada_mail',
+  },
+
+  replyTo: {
+    address: 'mail@adonis',
+    name: 'olakada_mail',
+  },
+
   /**
    * The mailers object can be used to configure multiple mailers
    * each using a different transport or same transport with different

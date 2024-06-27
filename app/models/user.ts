@@ -7,6 +7,8 @@ import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import Cart from './cart.js'
 import type { HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 import Order from './order.js'
+import mail from '@adonisjs/mail/services/main'
+import Token from './token.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -15,6 +17,11 @@ const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
 
 export default class User extends compose(BaseModel, AuthFinder) {
   static accessTokens = DbAccessTokensProvider.forModel(User)
+  static emailVerificationTokens = DbAccessTokensProvider.forModel(User, {
+    expiresIn: '10 min',
+    prefix: 'oat_',
+    type: 'email_verification_token',
+  })
 
   @column({ isPrimary: true })
   declare id: number
@@ -31,6 +38,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare email: string
 
+  @column()
+  declare isVerified: boolean
+
   @column({ serializeAs: null })
   declare password: string
 
@@ -45,4 +55,22 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   @hasMany(() => Order)
   declare orders: HasMany<typeof Order>
+
+  @hasMany(() => Token)
+  declare tokens: HasMany<typeof Token>
+
+  @hasMany(() => Token, {
+    onQuery: (query) => query.where('type', 'PASSWORD_RESET'),
+  })
+  declare passwordResetTokens: HasMany<typeof Token>
+
+  async sendEmailVerification() {
+    const verificationToken = await User.emailVerificationTokens.create(this)
+    await mail.send((message) => {
+      message
+        .to(this.email)
+        .subject('Verify your email address')
+        .htmlView('emails/verify', { user: this, token: verificationToken.value })
+    })
+  }
 }
