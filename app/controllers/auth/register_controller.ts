@@ -1,5 +1,4 @@
 import type { HttpContext } from '@adonisjs/core/http'
-
 import User from '#models/user'
 import { registerValidator } from '#validators/auth'
 
@@ -9,8 +8,10 @@ export default class RegisterController {
 
     const user = await User.create(userData)
 
-    const token = await User.accessTokens.create(user)
+    await user.sendVerifyEmail()
 
-    return token
+    const accessToken = await User.accessTokens.create(user)
+
+    return { message: 'User registered, Check mail to verify user account', token: accessToken }
   }
 }
